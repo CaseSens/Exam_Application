@@ -32,6 +32,7 @@ public class Exam {
 
     Exam (boolean createExam)
     {
+        SharedPage sharedPageInstance = new SharedPage();
         JFrame createExamFrame = new JFrame("Create your exam");
         JLabel askNameOfExam = new JLabel("Enter the name of your exam");
         JLabel askSubjectOfExam = new JLabel("Enter the subject of your exam");
@@ -65,6 +66,9 @@ public class Exam {
             doesExamExist();
             if (!doesExamExist()) {
                 addExamToList();
+                createExamFrame.setVisible(false);
+                sharedPageInstance.closeMainFrame();
+                resetPage();
             } else {
                 JOptionPane.showMessageDialog(null, "Error: Exam already exists");
             }
@@ -131,6 +135,19 @@ public class Exam {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void resetPage() {
+        numberOfExams=0;
+        nameOfExamsByIndex.clear();
+        nameOfSubjectsByIndex.clear();
+        nameToSubjectMap.clear();
+        examByNumberMap.clear();
+
+        setNumberOfExamsOnFile();
+        createExamMap();
+        AdminPage adminPage = new AdminPage();
+        adminPage.createAdminPage();
     }
 
     public int getNumberOfExamsOnFile() {

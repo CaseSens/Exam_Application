@@ -5,7 +5,7 @@ import java.awt.event.ComponentEvent;
 import java.util.concurrent.Flow;
 
 public class SharedPage {
-
+    static JFrame mainFrame;
     static JPanel leftPanel;
     static JPanel leftMenu;
     static JPanel exams;
@@ -13,7 +13,7 @@ public class SharedPage {
     static int leftPanelWidth;
     public static void createSharedPage() {
         Exam examInfo = new Exam();
-        JFrame mainFrame = new JFrame();
+         mainFrame = new JFrame("Welcome");
 
         availableExams = new JLabel("Available Exams");
 
@@ -59,9 +59,12 @@ public class SharedPage {
             component.setBackground(Color.CYAN);
         }
 
+        JScrollPane examsScrollPane = new JScrollPane(exams);
+        examsScrollPane.setPreferredSize(new Dimension(1920, 1080));
+        examsScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
-
-        mainFrame.add(exams, BorderLayout.CENTER);
+        mainFrame.getContentPane().add(examsScrollPane, BorderLayout.CENTER);
+//        mainFrame.add(exams, BorderLayout.CENTER);
         mainFrame.add(leftPanel, BorderLayout.WEST);
         mainFrame.add(mainPageTitlePanel, BorderLayout.NORTH);
 
@@ -70,6 +73,10 @@ public class SharedPage {
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         mainFrame.setVisible(true);
 
+    }
+
+    public void closeMainFrame() {
+        mainFrame.setVisible(false);
     }
 
 
