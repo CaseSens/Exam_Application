@@ -1,23 +1,33 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Exam {
     private static int numberOfExams;
+    private static ArrayList<String> nameOfExamsByIndex = new ArrayList<>();
+    private static ArrayList<String> nameOfSubjectsByIndex = new ArrayList<>();
+
+
 
     private String tempNameExam;
     private String tempSubjectExam;
     private File examFile = new File("EXAM-LIST.txt");
     private HashMap<String, String> nameToSubjectMap = new HashMap<>(); //reason why not just hashmap is because I want doubles of name/subject but not together
+
+
+    private HashMap<Integer, Exam> examByNumberMap = new HashMap<>();
     private BufferedReader br;
     private JButton submit = new JButton("Submit");
 
     Exam () {
 
+    }
+
+    Exam (String name, String subject) {
+        nameOfExamsByIndex.add(name);
+        nameOfSubjectsByIndex.add(subject);
     }
 
     Exam (boolean createExam)
@@ -52,7 +62,6 @@ public class Exam {
         submit.addActionListener(e -> {
             tempNameExam = enterNameOfExam.getText();
             tempSubjectExam = enterSubjectOfExam.getText();
-            createExamMap();
             doesExamExist();
             if (!doesExamExist()) {
                 addExamToList();
@@ -71,15 +80,24 @@ public class Exam {
         try {
             br = new BufferedReader(new FileReader(examFile));
             String line;
+            int i = 1;
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(" ");
                 String keyName = parts[0];
                 String valueSubject = parts[1];
                 nameToSubjectMap.put(keyName, valueSubject);
+
+                Exam newExam = new Exam(keyName, valueSubject);
+                examByNumberMap.put(i, newExam);
+                System.out.println(nameOfExamsByIndex.toString());
+                i++;
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        System.out.println(nameToSubjectMap);
+
     }
 
     public boolean doesExamExist() {
@@ -108,7 +126,7 @@ public class Exam {
             while ((line = br.readLine()) != null) {
                 numberOfExams++;
             }
-            System.out.println("number of exams: "+getNumberOfExamsOnFile());
+            System.out.println("number of exams: " + getNumberOfExamsOnFile());
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -117,5 +135,13 @@ public class Exam {
 
     public int getNumberOfExamsOnFile() {
         return numberOfExams;
+    }
+
+    public String getNameOfExam(int examNumber) {
+        return nameOfExamsByIndex.get(examNumber);
+    }
+
+    public String getSubjectOfExam(int examNumber) {
+        return nameOfSubjectsByIndex.get(examNumber);
     }
 }

@@ -3,6 +3,7 @@ public class Main {
     {
         Exam examInfo = new Exam();
         examInfo.setNumberOfExamsOnFile();
+        examInfo.createExamMap();
         UserFileMap userFileMap = new UserFileMap();
         System.out.println(userFileMap.getStudentUsers().toString());
         LogOrRegister buildGUI = new LogOrRegister();
