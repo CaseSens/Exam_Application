@@ -11,17 +11,14 @@ public class LogOrRegister {
     private static JButton submit;
     private static JButton registerBtn;
     private static JFrame mainFrame;
-    private static String tempUsername;
-    private static String tempPassword;
-    private static LinkedHashMap<String, String> tempUserMap = new LinkedHashMap<>();
     private static JTextField usernameText;
     private static JTextField passwordText;
     private static UserFileMap userFileMap = new UserFileMap();
     private static LinkedHashSet<String> combinedKeySet = new LinkedHashSet<>();
     private static LinkedHashSet<String> combinedAdminSet = new LinkedHashSet<>();
     private static LinkedHashSet<String> combinedStudentSet = new LinkedHashSet<>();
-    public static volatile boolean isLoggedIn = false;
-    public static volatile boolean isAdmin = false;
+    public volatile boolean isLoggedIn = false;
+    public volatile boolean isAdmin = false;
 
     public void buildLoginPage() {
         createKeySet();
@@ -39,7 +36,7 @@ public class LogOrRegister {
         return mainFrame;
     }
 
-    private static JPanel login()
+    private JPanel login()
     {
         JPanel userPanel = new JPanel();
         JLabel usernameLabel = new JLabel("Username:");
@@ -78,14 +75,19 @@ public class LogOrRegister {
         System.out.println(combinedKeySet.toString());
     }
 
+    private static void updateKeySet(String username) {
+        combinedAdminSet.add(username);
+        combinedKeySet.add(username);
+    }
+
     private static void registerClicked()
     {
         registerBtn.addActionListener(e -> {
-            tempUsername = usernameText.getText();
-            tempPassword = passwordText.getText();
+            String username = usernameText.getText();
+            String password = passwordText.getText();
 
-                if (!combinedKeySet.contains(tempUsername)) {
-                    createRegisterPage();
+                if (!combinedKeySet.contains(username)) {
+                    createRegisterPage(username, password);
                 } else {
                     JOptionPane.showMessageDialog(null, "You have entered a username that is already" +
                     " in use, please login instead.");
@@ -93,28 +95,28 @@ public class LogOrRegister {
         });
     }
 
-    private static void loginClicked()
+    private void loginClicked()
     {
         submit.addActionListener(e -> {
-            tempUsername = usernameText.getText();
-            tempPassword = passwordText.getText();
+            String username = usernameText.getText();
+            String password = passwordText.getText();
 
 
-            if (combinedAdminSet.contains(tempUsername)) {
-                String adminPassword = userFileMap.getAdminUsers().get(tempUsername);
-                if (adminPassword != null && adminPassword.equals(tempPassword)) {
+            if (combinedAdminSet.contains(username)) {
+                String adminPassword = userFileMap.getAdminUsers().get(username);
+                if (adminPassword != null && adminPassword.equals(password)) {
                     setLoggedIn(true, true);
                     AdminPage adminPage = new AdminPage();
                     adminPage.createAdminPage();
                     mainFrame.setVisible(false);
-                    System.out.println("welcome " + tempUsername);
+                    System.out.println("welcome " + username);
                     System.out.println(isLoggedIn + " " + isAdmin);
                 } else {
                     JOptionPane.showMessageDialog(null, "You have entered the wrong password");
                 }
-            } else if (combinedStudentSet.contains(tempUsername)) {
-                String studentPassword = userFileMap.getStudentUsers().get(tempUsername);
-                if(studentPassword != null && studentPassword.equals(tempPassword)) {
+            } else if (combinedStudentSet.contains(username)) {
+                String studentPassword = userFileMap.getStudentUsers().get(username);
+                if(studentPassword != null && studentPassword.equals(password)) {
                     setLoggedIn(true, false);
                     NonAdminPage nonAdminPage = new NonAdminPage();
                     nonAdminPage.createNonAdminPage();
@@ -129,12 +131,16 @@ public class LogOrRegister {
         });
     }
 
-    public synchronized static void setLoggedIn(boolean loggedIn, boolean admin) {
+    public synchronized void setLoggedIn(boolean loggedIn, boolean admin) {
         isLoggedIn = loggedIn;
         isAdmin = admin;
     }
 
-    private static JFrame createRegisterPage()
+    public synchronized boolean getAdmin() {
+        return isAdmin;
+    }
+
+    private static JFrame createRegisterPage(String username, String password)
     {
         JFrame register = new JFrame("Register");
         JPanel registerPnl = new JPanel();
@@ -178,11 +184,12 @@ public class LogOrRegister {
                     if (privKeyInput.getText().equals(adminKey.getPrivateKey())) {
                         privateKeyFrame.setVisible(false);
                         register.setVisible(false);
-                        mainFrame.setVisible(false);
+//                        mainFrame.setVisible(false);
 
-                        Users userInfo = new Users(tempUsername, tempPassword);
+                        Users userInfo = new Users(username, password);
                         System.out.println(userInfo.getUsername() + " " + userInfo.getPassword());
                         userInfo.createAdminUser();
+                        updateKeySet(username);
 
                     } else {
                         JOptionPane.showMessageDialog(null, "Error: Invalid Input");
@@ -190,7 +197,7 @@ public class LogOrRegister {
                     }
                 });
             } else if (nonAdminType.isSelected()) {
-                Users userInfo = new Users(tempUsername, tempPassword);
+                Users userInfo = new Users(username, password);
                 System.out.println(userInfo.getUsername() + " " + userInfo.getPassword());
                 userInfo.createStudentUser();
             }

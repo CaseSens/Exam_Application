@@ -2,4 +2,5 @@ EXAM1 SCIENCE
 Exam2 Math
 Exam3 History
 Exam4 History
-Exam5 Arts
+Exam5 Maths
+Exam6 test
