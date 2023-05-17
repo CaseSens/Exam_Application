@@ -9,8 +9,8 @@ public class Users
     both users types can share: Username, Password, login/logout functionality */
     private String username;
     private String password;
-    private static final File studentFile = new File("STUDENT_USER-INFO.txt");
-    private static final File adminFile = new File("ADMIN_USER-INFO.txt");
+    private static final File studentFile = new File("Users/STUDENT_USER-INFO.txt");
+    private static final File adminFile = new File("Users/ADMIN_USER-INFO.txt");
 
     public Users() {
 

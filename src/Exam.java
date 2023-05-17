@@ -3,7 +3,6 @@ import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 
 public class Exam {
     private boolean VisibleToStudents = false;
@@ -16,7 +15,7 @@ public class Exam {
 
     private String tempNameExam;
     private String tempSubjectExam;
-    private File examFile = new File("EXAM-LIST.txt");
+    private File unfinishedExamsFile = new File("Exams/UnfinishedExams/EXAM-LIST.txt");
     private static HashMap<String, String> nameToSubjectMap = new HashMap<>(); //reason why not just hashmap is because I want doubles of name/subject but not together
 
 
@@ -85,7 +84,7 @@ public class Exam {
 
     public void createExamMap() {
         try {
-            br = new BufferedReader(new FileReader(examFile));
+            br = new BufferedReader(new FileReader(unfinishedExamsFile));
             String line;
             int i = 1;
             while ((line = br.readLine()) != null) {
@@ -129,7 +128,7 @@ public class Exam {
 
     public void addExamToList() {
         try {
-            PrintWriter writer = new PrintWriter(new FileWriter(examFile, true));
+            PrintWriter writer = new PrintWriter(new FileWriter(unfinishedExamsFile, true));
             writer.println(tempNameExam + " " + tempSubjectExam);
             writer.close();
         } catch (IOException e){
@@ -139,7 +138,7 @@ public class Exam {
 
     public void setNumberOfExamsOnFile() {
         try {
-            br = new BufferedReader(new FileReader(examFile));
+            br = new BufferedReader(new FileReader(unfinishedExamsFile));
             String line;
             while ((line = br.readLine()) != null) {
                 numberOfExams++;
