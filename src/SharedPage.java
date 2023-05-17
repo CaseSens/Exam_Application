@@ -3,7 +3,7 @@ import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 
-public class SharedPage {
+public class SharedPage extends Exam {
     JFrame mainFrame;
     JPanel leftPanel;
     JPanel leftMenu;

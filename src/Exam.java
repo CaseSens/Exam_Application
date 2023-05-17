@@ -5,8 +5,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Exam {
-    private boolean VisibleToStudents = false;
     private static int numberOfExams;
+    private String nameOfExam;
+    private String subjectOfExam;
     private ArrayList<Exam> examObjects= new ArrayList<>();
     private static ArrayList<String> nameOfExamsByIndex = new ArrayList<>();
     private static ArrayList<String> nameOfSubjectsByIndex = new ArrayList<>();
@@ -15,7 +16,7 @@ public class Exam {
 
     private String tempNameExam;
     private String tempSubjectExam;
-    private File unfinishedExamsFile = new File("Exams/UnfinishedExams/EXAM-LIST.txt");
+    private static final File unfinishedExamsFile = new File("Exams/UnfinishedExams/EXAM-LIST.txt");
     private static HashMap<String, String> nameToSubjectMap = new HashMap<>(); //reason why not just hashmap is because I want doubles of name/subject but not together
 
 
@@ -110,11 +111,8 @@ public class Exam {
 
     }
 
-    public void setExamVisibleToStudents(Exam exam) {
-        boolean isVisible = objectMap.get(exam);
-        if (!isVisible) {
-            objectMap.put(exam, true);
-        }
+    public HashMap<Exam, Boolean> getObjectMap() {
+        return objectMap;
     }
 
     public boolean doesExamExist() {

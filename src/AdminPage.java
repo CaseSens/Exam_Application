@@ -8,10 +8,12 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 
 public class AdminPage extends SharedPage {
+    Exam examInfo = new Exam();
+
+    boolean isVisible = false;
     File filePath = new File("Exams/UnfinishedExams/examSheet.ser");
 
     public void createAdminPage() {
-        Exam examInfo = new Exam();
         createSharedPage();
         createUnfinishedExamList(examInfo); //-------------------------------------------
 
@@ -50,7 +52,7 @@ public class AdminPage extends SharedPage {
             exams.add(button);
 
             button.addActionListener(e -> {
-                ExamSheet examSheet = new ExamSheet();
+//                ExamSheet examSheet = new ExamSheet(examInfo.get);
             });
         }
 

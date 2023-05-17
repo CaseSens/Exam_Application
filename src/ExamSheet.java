@@ -5,7 +5,8 @@ import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
 
-public class ExamSheet extends AdminPage implements Serializable{
+public class ExamSheet extends AdminPage implements Serializable {
+    Exam selectedExam;
 
     ArrayList<Question> questions = new ArrayList<>();
     JFrame examSheet;
@@ -22,7 +23,8 @@ public class ExamSheet extends AdminPage implements Serializable{
     private JPanel allQuestionsContainer;
     private JScrollPane examScrollPane;
 
-    ExamSheet () {
+    ExamSheet (Exam selectedExam) {
+        this.selectedExam = selectedExam;
         try {
             FileInputStream fileIn = new FileInputStream(filePath);
             ObjectInputStream in = new ObjectInputStream(fileIn);
@@ -118,7 +120,9 @@ public class ExamSheet extends AdminPage implements Serializable{
                 if (!filePath.exists()) {
                     filePath.createNewFile();
                 }
-
+                if (setVisible.isSelected()) {
+//                    examInfo.getObjectMap().put(newExam, )
+                }
                 FileOutputStream fileOut = new FileOutputStream(filePath);
                 ObjectOutputStream out = new ObjectOutputStream(fileOut);
                 out.writeObject(this);
@@ -186,7 +190,7 @@ public class ExamSheet extends AdminPage implements Serializable{
                     questionInputtedByUser = questionInput.getText();
                     questions.get(index).setQuestion(questionInputtedByUser);
                     System.out.println("Question " + (index + 1) + " is " + questions.get(index).getQuestion());
-                });
+        });
 
         JScrollPane questionTextPane = new JScrollPane(questionInput);
         questionTextPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
