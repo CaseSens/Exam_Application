@@ -2,11 +2,10 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.concurrent.Flow;
 
-public class ExamSheet extends AdminPage{
+public class ExamSheet extends AdminPage implements Serializable{
 
     ArrayList<Question> questions = new ArrayList<>();
     JFrame examSheet;
@@ -24,9 +23,30 @@ public class ExamSheet extends AdminPage{
     private JScrollPane examScrollPane;
 
     ExamSheet () {
+        try {
+            FileInputStream fileIn = new FileInputStream(filePath);
+            ObjectInputStream in = new ObjectInputStream(fileIn);
+            ExamSheet savedExamSheet = (ExamSheet) in.readObject();
+            in.close();
+            fileIn.close();
+            System.out.println("file found successfully");
+            this.questions = new ArrayList<>(savedExamSheet.questions);
+        } catch (IOException | ClassNotFoundException ex) {
+            System.out.println("file not found");
+        }
+        allQuestionsContainer = new JPanel(new GridBagLayout());
+        examScrollPane = new JScrollPane(allQuestionsContainer);
+
+        // Create the exam sheet GUI
         createExamSheet();
+
+        // Render the questions in the allQuestionsContainer
+        renderQuestions();
+
     }
     public void createExamSheet() {
+
+
 
         JPanel addMenu = new JPanel();
         BoxLayout leftMenuLayout = new BoxLayout(addMenu, BoxLayout.Y_AXIS);
@@ -93,6 +113,23 @@ public class ExamSheet extends AdminPage{
         bottomPanel.add(saveExam, BorderLayout.CENTER);
         bottomPanel.add(visibility, BorderLayout.EAST);
 
+        saveExam.addActionListener(e -> {
+            try {
+                if (!filePath.exists()) {
+                    filePath.createNewFile();
+                }
+
+                FileOutputStream fileOut = new FileOutputStream(filePath);
+                ObjectOutputStream out = new ObjectOutputStream(fileOut);
+                out.writeObject(this);
+                out.close();
+                fileOut.close();
+                System.out.println("ExamSheet saved successfully.");
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        });
+
 
         examScrollPane = new JScrollPane();
         examScrollPane.setPreferredSize(new Dimension(1600, 900));
@@ -143,6 +180,14 @@ public class ExamSheet extends AdminPage{
         questionInput.setLineWrap(true);
         questionInput.setWrapStyleWord(true);
         questionInput.setText(questionText);
+
+        addDelayedListener(questionInput, 500, () -> {
+                    String questionInputtedByUser;
+                    questionInputtedByUser = questionInput.getText();
+                    questions.get(index).setQuestion(questionInputtedByUser);
+                    System.out.println("Question " + (index + 1) + " is " + questions.get(index).getQuestion());
+                });
+
         JScrollPane questionTextPane = new JScrollPane(questionInput);
         questionTextPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         questionTextPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
