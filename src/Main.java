@@ -5,7 +5,6 @@ public class Main {
         examInfo.setNumberOfExamsOnFile();
         examInfo.createExamMap();
 
-        examInfo.examMapPerLine();
         UserFileMap userFileMap = new UserFileMap();
         System.out.println(userFileMap.getStudentUsers().toString());
         LogOrRegister buildGUI = new LogOrRegister();

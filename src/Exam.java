@@ -4,37 +4,35 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class Exam {
+public class Exam implements Serializable {
     private static int numberOfExams;
     private String nameOfExam;
     private String subjectOfExam;
-    private ArrayList<Exam> examObjects= new ArrayList<>();
-    private static ArrayList<String> nameOfExamsByIndex = new ArrayList<>();
-    private static ArrayList<String> nameOfSubjectsByIndex = new ArrayList<>();
-
-
-
-    private String tempNameExam;
-    private String tempSubjectExam;
+    private static ArrayList<String> allExamNames = new ArrayList<>();
+    private static ArrayList<String> allExamSubjects = new ArrayList<>();
+    private ArrayList<Exam> examObjects = new ArrayList<>();
     private static final File unfinishedExamsFile = new File("Exams/UnfinishedExams/EXAM-LIST.txt");
     private static HashMap<String, String> nameToSubjectMap = new HashMap<>(); //reason why not just hashmap is because I want doubles of name/subject but not together
 
 
-    private static HashMap<Integer, HashMap<String, String>> examByNumberMap = new HashMap<>();
-    private static HashMap<Exam, Boolean> objectMap = new HashMap<>();
+    private static ArrayList<Exam> examArrayList = new ArrayList<>();
+    private static HashMap<Exam, Boolean> examVisibilityMap = new HashMap<>();
     private BufferedReader br;
     private JButton submit = new JButton("Submit");
 
-    Exam () {
+    Exam() {
 
     }
 
-    Exam (String name, String subject) { //when you want to access exam names
-        nameOfExamsByIndex.add(name);
-        nameOfSubjectsByIndex.add(subject);
+    Exam(String name, String subject) { //when you want to access exam names
+        this.nameOfExam = name;
+        this.subjectOfExam = subject;
+        nameToSubjectMap.put(name, subject);
+
+
     }
 
-    Exam (AdminPage adminPageInstance) //when you want to create an exam
+    Exam(AdminPage adminPageInstance) //when you want to create an exam
     {
         JFrame createExamFrame = new JFrame("Create your exam");
         JLabel askNameOfExam = new JLabel("Enter the name of your exam");
@@ -64,11 +62,11 @@ public class Exam {
 
 
         submit.addActionListener(e -> {
-            tempNameExam = enterNameOfExam.getText();
-            tempSubjectExam = enterSubjectOfExam.getText();
+            String nameOfThisExam = enterNameOfExam.getText();
+            String subjectOfThisExam = enterSubjectOfExam.getText();
             doesExamExist();
             if (!doesExamExist()) {
-                addExamToList();
+                addExamToList(nameOfThisExam, subjectOfThisExam);
                 createExamFrame.setVisible(false);
                 adminPageInstance.closeMainFrame();
                 resetPage();
@@ -76,11 +74,6 @@ public class Exam {
                 JOptionPane.showMessageDialog(null, "Error: Exam already exists");
             }
         });
-    }
-
-    public void createExamOnceInitialized(/*int amountOfMultipleChoice, int amountOfShortAnswer, int amountOfLongAnswer*/)
-    {
-
     }
 
     public void createExamMap() {
@@ -95,14 +88,17 @@ public class Exam {
                 nameToSubjectMap.put(keyName, valueSubject);
 
                 Exam newExam = new Exam(keyName, valueSubject);
-                objectMap.put(newExam, false);
+                examVisibilityMap.put(newExam, false);
+
+
+                examArrayList.add(i - 1, newExam);
+                System.out.println(examArrayList.get(i - 1).getNameOfExam());
                 i++;
-
-                HashMap<String, String> examMap = new HashMap<>();
-                examMap.put(keyName, valueSubject);
-
-                examByNumberMap.put(i-1, examMap);
+                nameToSubjectMap.put(keyName, valueSubject);
+                allExamNames.add(keyName);
+                allExamSubjects.add(valueSubject);
             }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -111,25 +107,34 @@ public class Exam {
 
     }
 
-    public HashMap<Exam, Boolean> getObjectMap() {
-        return objectMap;
+    public Exam getExamAtIndex(int index) {
+        return examArrayList.get(index);
+    }
+
+    public int getIndexOfExam(Exam exam) {
+        for (int i = 0; i < examArrayList.size(); i++) {
+            if (examArrayList.get(i).equals(exam)) {
+                return i; // Found the index for the specified Exam object
+            }
+        }
+        return -1; // Exam not found in the ArrayList
     }
 
     public boolean doesExamExist() {
         for (String key : nameToSubjectMap.keySet()) { //for loop to ignore case
-            if (key.equalsIgnoreCase(tempNameExam) && nameToSubjectMap.get(key).equalsIgnoreCase(tempSubjectExam)) {
+            if (key.equalsIgnoreCase(nameOfExam) && nameToSubjectMap.get(key).equalsIgnoreCase(subjectOfExam)) {
                 return true;
             }
         }
         return false;
     }
 
-    public void addExamToList() {
+    public void addExamToList(String nameOfThisExam, String subjectOfThisExam) {
         try {
             PrintWriter writer = new PrintWriter(new FileWriter(unfinishedExamsFile, true));
-            writer.println(tempNameExam + " " + tempSubjectExam);
+            writer.println(nameOfThisExam + " " + subjectOfThisExam);
             writer.close();
-        } catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -149,11 +154,11 @@ public class Exam {
     }
 
     public void resetPage() {
-        numberOfExams=0;
-        nameOfExamsByIndex.clear();
-        nameOfSubjectsByIndex.clear();
+        numberOfExams = 0;
+        allExamNames.clear();
+        allExamSubjects.clear();
         nameToSubjectMap.clear();
-        examByNumberMap.clear();
+        examArrayList.clear();
 
         setNumberOfExamsOnFile();
         createExamMap();
@@ -165,31 +170,36 @@ public class Exam {
         return numberOfExams;
     }
 
-    public String getNameOfExam(int examNumber) {
-        return nameOfExamsByIndex.get(examNumber);
+    public String getSubjectOfExam() {
+        return subjectOfExam;
     }
 
-    public String getSubjectOfExam(int examNumber) {
-        return nameOfSubjectsByIndex.get(examNumber);
+    public String getNameOfExam() {
+        return nameOfExam;
     }
 
-    public HashMap<Integer, HashMap<String, String>> getAllExamsByNumberMap() {
-        return examByNumberMap;
+    public String getNameOfExamAtIndex(int index) {
+        return allExamNames.get(index);
     }
 
-    public void examMapPerLine() {
-        int i = 1;
-        for (HashMap<String, String> examsByNumber : examByNumberMap.values()) {
-            System.out.println("Exam " + i + ": " + examsByNumber);
-            i++;
+    public String getSubjectOfExamAtIndex(int index) {
+        return allExamSubjects.get(index);
+    }
+
+    public ArrayList<Exam> getAllExamsByNumberMap() {
+        return examArrayList;
+    }
+
+    /**
+     * simply prints out all exams
+     */
+    public void examListPerLine() {
+        for (int i = 0; i < examArrayList.size(); i++) {
+            System.out.println("Exam " + (i + 1) + ": " + getNameOfExam());
         }
     }
 
     public boolean isExamFullyCreated() {
         return isExamFullyCreated();
     }
-
-//    public HashMap<String, String> getValueAsString(int i) {
-//        return examByNumberMap.get(i);
-//    }
 }

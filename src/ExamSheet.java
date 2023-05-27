@@ -22,13 +22,15 @@ public class ExamSheet extends AdminPage implements Serializable {
 
     private JPanel allQuestionsContainer;
     private JScrollPane examScrollPane;
+    private JCheckBox setVisible = new JCheckBox("Make exam visible to students?");
 
     ExamSheet (Exam selectedExam) {
         this.selectedExam = selectedExam;
         try {
-            FileInputStream fileIn = new FileInputStream(filePath);
+            FileInputStream fileIn = new FileInputStream(filePath.getPath() + "/" + selectedExam.getNameOfExam() + ".ser");
             ObjectInputStream in = new ObjectInputStream(fileIn);
             ExamSheet savedExamSheet = (ExamSheet) in.readObject();
+            setVisible.setSelected(savedExamSheet.isVisible);
             in.close();
             fileIn.close();
             System.out.println("file found successfully");
@@ -110,7 +112,10 @@ public class ExamSheet extends AdminPage implements Serializable {
         JPanel bottomPanel = new JPanel(new BorderLayout());
         JPanel visibility = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton saveExam = new JButton("Save exam");
-        JCheckBox setVisible = new JCheckBox("Make exam visible to students?");
+        if (isVisible) {
+            setVisible.setSelected(true);
+        }
+
         visibility.add(setVisible);
         bottomPanel.add(saveExam, BorderLayout.CENTER);
         bottomPanel.add(visibility, BorderLayout.EAST);
@@ -121,14 +126,17 @@ public class ExamSheet extends AdminPage implements Serializable {
                     filePath.createNewFile();
                 }
                 if (setVisible.isSelected()) {
-//                    examInfo.getObjectMap().put(newExam, )
+                    isVisible = true;
                 }
-                FileOutputStream fileOut = new FileOutputStream(filePath);
+
+                FileOutputStream fileOut = new FileOutputStream(filePath.getPath() + "/" + selectedExam.getNameOfExam() + ".ser");
                 ObjectOutputStream out = new ObjectOutputStream(fileOut);
                 out.writeObject(this);
                 out.close();
                 fileOut.close();
                 System.out.println("ExamSheet saved successfully.");
+                System.out.println("visible?: " + isVisible);
+
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
@@ -152,17 +160,19 @@ public class ExamSheet extends AdminPage implements Serializable {
 
     public void renderQuestions() { //repaint allQuestionContainer as they are
         resetContainer(allQuestionsContainer);
+        if (isVisible) {
+        }
         int index = 0;
         for (Question question : questions) {
             /* switch case dependent on type,
             * then run create[type]Answer*/
             switch (question.getQuestionType()) {
                 case MULTIPLE_CHOICE:
-                    createMultipleChoice(allQuestionsContainer, index, question.getQuestion());
+                    createMultipleChoice(allQuestionsContainer, index, question);
                     index++;
                     break;
                 case SHORT_ANSWER:
-                    createShortAnswer(allQuestionsContainer, index, question.getQuestion());
+                    createShortAnswer(allQuestionsContainer, index, question);
                     index++;
                     break;
                 case LONG_ANSWER:
@@ -170,7 +180,7 @@ public class ExamSheet extends AdminPage implements Serializable {
                     index++;
                     break;
                 default:
-                    System.out.println("bruh");
+                    System.out.println("if you reach this you've done something very wrong");
                     break;
             }
         }
@@ -185,7 +195,7 @@ public class ExamSheet extends AdminPage implements Serializable {
         questionInput.setWrapStyleWord(true);
         questionInput.setText(questionText);
 
-        addDelayedListener(questionInput, 500, () -> {
+        addDelayedListener(questionInput, 250, () -> {
                     String questionInputtedByUser;
                     questionInputtedByUser = questionInput.getText();
                     questions.get(index).setQuestion(questionInputtedByUser);
@@ -226,16 +236,16 @@ public class ExamSheet extends AdminPage implements Serializable {
         container.repaint();
     }
 
-    private void createShortAnswer(JPanel allQuestionsContainer, int index, String questionText) {
+    private void createShortAnswer(JPanel allQuestionsContainer, int index, Question thisQuestion) {
         JPanel questionContainer = new JPanel(new GridBagLayout());
         JPanel questionPanel = new JPanel();
         JLabel question = new JLabel("Q" + (index + 1) + ": ");
         JTextArea questionInput = new JTextArea();
         questionInput.setLineWrap(true);
         questionInput.setWrapStyleWord(true);
-        questionInput.setText(questionText);
+        questionInput.setText(thisQuestion.getQuestion());
 
-        addDelayedListener(questionInput, 500, () -> {
+        addDelayedListener(questionInput, 250, () -> {
             String questionInputtedByUser;
             questionInputtedByUser = questionInput.getText();
             questions.get(index).setQuestion(questionInputtedByUser);
@@ -270,7 +280,7 @@ public class ExamSheet extends AdminPage implements Serializable {
         });
     }
 
-    private void createMultipleChoice(JPanel allQuestionsContainer, int index, String questionText) {
+    private void createMultipleChoice(JPanel allQuestionsContainer, int index, Question thisQuestion) {
         JPanel questionContainer = new JPanel(new GridBagLayout());
         JPanel questionPanel = new JPanel();
         JPanel answerPanel = new JPanel();
@@ -278,7 +288,7 @@ public class ExamSheet extends AdminPage implements Serializable {
         JTextArea questionInput = new JTextArea();
         questionInput.setLineWrap(true);
         questionInput.setWrapStyleWord(true);
-        questionInput.setText(questionText);
+        questionInput.setText(thisQuestion.getQuestion());
 
         addDelayedListener(questionInput, 500, () -> {
             String questionInputtedByUser;
@@ -310,13 +320,16 @@ public class ExamSheet extends AdminPage implements Serializable {
         for (int i=0; i<4; i++) {
             JLabel abcd = new JLabel(String.valueOf(currentCharacter) + ": ");
             JTextField answerInput = new JTextField();
+            if (thisQuestion.getAnswers() != null && thisQuestion.getAnswers().size() == 4) {
+                answerInput.setText(thisQuestion.getAnswers(i));
+            }
             final int answerIndex = i;
 
-            addDelayedListener(answerInput, 500, () -> {
+            addDelayedListener(answerInput, 250, () -> {
                 String answer;
                 answer = answerInput.getText();
                 questions.get(index).setAnswers(answerIndex, answer);
-                System.out.println("Question " + (index+1) + "'s answers are: " + questions.get(index).getAnswers());
+                System.out.println("Question " + (index+1) + "'s answers are: " + thisQuestion.getAnswers());
             });
 
             answerInput.setPreferredSize(new Dimension(multipleAnswerDimensions));

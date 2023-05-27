@@ -5,6 +5,7 @@ public class Question implements Serializable {
     private String question;
     private ArrayList<String> answers;
     private QuestionType questionType;
+    private Boolean isVisible = false;
 
     public Question (String question, String answers, QuestionType questionType) {
         this.question = question;
@@ -21,6 +22,19 @@ public class Question implements Serializable {
         this.question = question;
     }
 
+    /**
+     * returns a specific answer via its INDEX
+     * @param index
+     * @return
+     */
+    public String getAnswers(int index) {
+        return answers.get(index);
+    }
+
+    /**
+     * returns a list of all answers to that question
+     * @return
+     */
     public ArrayList<String> getAnswers() {
         return answers;
     }

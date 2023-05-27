@@ -11,7 +11,7 @@ public class AdminPage extends SharedPage {
     Exam examInfo = new Exam();
 
     boolean isVisible = false;
-    File filePath = new File("Exams/UnfinishedExams/examSheet.ser");
+    File filePath = new File("Exams/UnfinishedExams/");
 
     public void createAdminPage() {
         createSharedPage();
@@ -44,7 +44,9 @@ public class AdminPage extends SharedPage {
         exams = new JPanel();
         exams.setLayout(new BoxLayout(exams, BoxLayout.Y_AXIS));
         for (int i = 0; i < examInfo.getNumberOfExamsOnFile(); i++) {
-            JButton button = new JButton("<html>"+"<h1>" + examInfo.getNameOfExam(i) + "</h1>"+"<br>" + "<br>" + "<center>" + examInfo.getSubjectOfExam(i) + "</center>" + "</html>");
+            final int index = i;
+            System.out.println("there are " + examInfo.getNumberOfExamsOnFile() + "exams");
+            JButton button = new JButton("<html>"+"<h1>" + examInfo.getNameOfExamAtIndex(i) + "</h1>"+"<br>" + "<br>" + "<center>" + examInfo.getSubjectOfExamAtIndex(i) + "</center>" + "</html>");
             button.setAlignmentX(Component.CENTER_ALIGNMENT);
             button.setMaximumSize(new Dimension(200, 300)); //sets width to 200, but for some reason doesnt work on height
             button.setPreferredSize(new Dimension(200, 250)); //sets height to 300, but for some reason doesnt work on width
@@ -52,7 +54,7 @@ public class AdminPage extends SharedPage {
             exams.add(button);
 
             button.addActionListener(e -> {
-//                ExamSheet examSheet = new ExamSheet(examInfo.get);
+                ExamSheet examSheet = new ExamSheet(examInfo.getExamAtIndex(index));
             });
         }
 
