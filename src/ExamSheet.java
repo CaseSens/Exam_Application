@@ -27,7 +27,24 @@ public class ExamSheet extends AdminPage implements Serializable {
     ExamSheet (Exam selectedExam) {
         this.selectedExam = selectedExam;
         try {
-            FileInputStream fileIn = new FileInputStream(filePath.getPath() + "/" + selectedExam.getNameOfExam() + ".ser");
+            String specifiedFile = selectedExam.getNameOfExam() + ".ser";
+            String finishedPath = "Exams/FinishedExams/" + specifiedFile;
+            String unfinishedPath = "Exams/UnfinishedExams/" + specifiedFile;
+
+            FileInputStream fileIn = null;
+            File finishedFile = new File(finishedPath);
+            File unfinishedFile = new File(unfinishedPath);
+
+            if (finishedFile.exists()) {
+                fileIn = new FileInputStream(finishedFile);
+            } else {
+                if (unfinishedFile.exists()) {
+                    fileIn = new FileInputStream(unfinishedFile);
+                } else {
+                    throw new FileNotFoundException("File wasnt found");
+                }
+            }
+
             ObjectInputStream in = new ObjectInputStream(fileIn);
             ExamSheet savedExamSheet = (ExamSheet) in.readObject();
             setVisible.setSelected(savedExamSheet.isVisible);
@@ -91,9 +108,6 @@ public class ExamSheet extends AdminPage implements Serializable {
 
         //----------------------------------------------------------------------
 
-        allQuestionsContainer = new JPanel();
-        allQuestionsContainer.setLayout(new GridBagLayout());
-
         addMultipleChoice.addActionListener(e -> {
             initializeQuestion(QuestionType.MULTIPLE_CHOICE);
             renderQuestions();
@@ -121,15 +135,26 @@ public class ExamSheet extends AdminPage implements Serializable {
         bottomPanel.add(visibility, BorderLayout.EAST);
 
         saveExam.addActionListener(e -> {
+            String changeFilePath = "/";
             try {
                 if (!filePath.exists()) {
                     filePath.createNewFile();
                 }
                 if (setVisible.isSelected()) {
                     isVisible = true;
+                    selectedExam.setExamAsFinished(selectedExam);
+
+                    changeFilePath = "/FinishedExams/";
                 }
 
-                FileOutputStream fileOut = new FileOutputStream(filePath.getPath() + "/" + selectedExam.getNameOfExam() + ".ser");
+                FileOutputStream questionOut = new FileOutputStream(filePath.getPath() + changeFilePath + selectedExam.getNameOfExam() + "Questions.ser");
+                ObjectOutputStream questionOjectOut = new ObjectOutputStream(questionOut);
+                questionOjectOut.writeObject(questions);
+                questionOjectOut.close();
+                questionOut.close();
+                System.out.println("Question list saved successfully");
+
+                FileOutputStream fileOut = new FileOutputStream(filePath.getPath() + changeFilePath + selectedExam.getNameOfExam() + ".ser");
                 ObjectOutputStream out = new ObjectOutputStream(fileOut);
                 out.writeObject(this);
                 out.close();
@@ -140,12 +165,11 @@ public class ExamSheet extends AdminPage implements Serializable {
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
+
+            examSheet.dispose();
         });
 
-
-        examScrollPane = new JScrollPane();
         examScrollPane.setPreferredSize(new Dimension(1600, 900));
-        examScrollPane.setViewportView(allQuestionsContainer);
         examScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
         examSheet = new JFrame("Create your exam");
@@ -160,8 +184,6 @@ public class ExamSheet extends AdminPage implements Serializable {
 
     public void renderQuestions() { //repaint allQuestionContainer as they are
         resetContainer(allQuestionsContainer);
-        if (isVisible) {
-        }
         int index = 0;
         for (Question question : questions) {
             /* switch case dependent on type,
@@ -176,7 +198,7 @@ public class ExamSheet extends AdminPage implements Serializable {
                     index++;
                     break;
                 case LONG_ANSWER:
-                    createLongAnswer(allQuestionsContainer, index, question.getQuestion());
+                    createLongAnswer(allQuestionsContainer, index, question);
                     index++;
                     break;
                 default:
@@ -186,14 +208,14 @@ public class ExamSheet extends AdminPage implements Serializable {
         }
     }
 
-    private void createLongAnswer(JPanel allQuestionsContainer, int index, String questionText) {
+    private void createLongAnswer(JPanel allQuestionsContainer, int index, Question thisQuestion) {
         JPanel questionContainer = new JPanel(new GridBagLayout());
         JPanel questionPanel = new JPanel();
         JLabel question = new JLabel("Q" + (index + 1) + ": ");
         JTextArea questionInput = new JTextArea();
         questionInput.setLineWrap(true);
         questionInput.setWrapStyleWord(true);
-        questionInput.setText(questionText);
+        questionInput.setText(thisQuestion.getQuestion());
 
         addDelayedListener(questionInput, 250, () -> {
                     String questionInputtedByUser;
@@ -422,32 +444,4 @@ public class ExamSheet extends AdminPage implements Serializable {
 
         questions.add(newQuestion);
     }
-
-//    private void refreshQuestionNumbers(JPanel allQuestionsContainer, int startIndex) {
-//        Component[] components = allQuestionsContainer.getComponents(); //each questionContainer
-//        for (int i = 0; i < components.length; i++) { //loop through them
-//            if (components[i] instanceof JPanel) { //if component is JPanel
-//                JPanel panel = (JPanel) components[i]; //create a new JPanel from that component
-//                Component[] innerComponents = panel.getComponents(); //each components of questionContainer
-//                for (Component component : innerComponents) { //iterate through the inner components
-//                    if (component instanceof JPanel) {
-//                        JPanel newQuestionPanel = (JPanel) component;
-//                        Component[] questionComponents = newQuestionPanel.getComponents();
-//                        for (Component questionComponent : questionComponents) {
-//                            if (questionComponent instanceof JLabel) { //if its a JLabel
-//                                JLabel label = (JLabel) questionComponent; //create new Label from the component
-//                                String labelText = label.getText(); //get text from the Label
-//                                if (labelText.startsWith("Q")) { //only get Labels that start with Q
-//                                    int questionNumber = Integer.parseInt(labelText.substring(1, labelText.indexOf(":"))); //grab only the number
-//                                    if (questionNumber > startIndex - 1) {
-//                                        label.setText("Q" + (questionNumber - 1) + ": "); //set question - 1
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
 }

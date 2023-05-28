@@ -11,7 +11,7 @@ public class AdminPage extends SharedPage {
     Exam examInfo = new Exam();
 
     boolean isVisible = false;
-    File filePath = new File("Exams/UnfinishedExams/");
+    File filePath = new File("Exams/");
 
     public void createAdminPage() {
         createSharedPage();
@@ -55,6 +55,7 @@ public class AdminPage extends SharedPage {
 
             button.addActionListener(e -> {
                 ExamSheet examSheet = new ExamSheet(examInfo.getExamAtIndex(index));
+
             });
         }
 

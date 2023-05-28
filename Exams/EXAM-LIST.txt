@@ -1,4 +1,4 @@
-EXAM1 SCIENCE
+EXAM1 SCIENCE VISIBLE
 Exam2 Math
 Exam3 History
 Exam4 History

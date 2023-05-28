@@ -1,11 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.Set;
 
 public class LogOrRegister {
     private static JButton submit;
@@ -29,14 +24,14 @@ public class LogOrRegister {
         mainFrame = new JFrame("Please Log In");
         mainFrame.setSize(900, 900);
         mainFrame.setLayout(null);
-        mainFrame.add(login());
+        mainFrame.add(loginPanel());
         mainFrame.setVisible(true);
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         return mainFrame;
     }
 
-    private JPanel login()
+    private JPanel loginPanel()
     {
         JPanel userPanel = new JPanel();
         JLabel usernameLabel = new JLabel("Username:");
@@ -118,6 +113,7 @@ public class LogOrRegister {
                 String studentPassword = userFileMap.getStudentUsers().get(username);
                 if(studentPassword != null && studentPassword.equals(password)) {
                     setLoggedIn(true, false);
+                    LoggedInUser loggedInUser = new LoggedInUser(username, password);
                     NonAdminPage nonAdminPage = new NonAdminPage();
                     nonAdminPage.createNonAdminPage();
                     mainFrame.setVisible(false);

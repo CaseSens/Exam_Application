@@ -10,9 +10,8 @@ public class SharedPage extends Exam {
 
     JPanel exams;
     JLabel availableExams;
-    int leftPanelWidth;
+    int leftPanelWidth = 0;
     JButton logoutButton;
-    JButton setVisibleToStudentsButton;
     public void createSharedPage() {
         Exam examInfo = new Exam();
         mainFrame = new JFrame("Welcome");
@@ -28,9 +27,6 @@ public class SharedPage extends Exam {
         leftPanel.add(Box.createVerticalGlue());
         leftPanel.add(leftMenu, BorderLayout.WEST);
         leftPanel.setBackground(Color.cyan);
-
-
-
 
         leftPanel.addComponentListener(new ComponentAdapter() { //only affects exams if leftPanel is present so good for student class
             @Override

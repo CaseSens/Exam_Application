@@ -3,6 +3,7 @@ import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 public class Exam implements Serializable {
     private static int numberOfExams;
@@ -10,15 +11,13 @@ public class Exam implements Serializable {
     private String subjectOfExam;
     private static ArrayList<String> allExamNames = new ArrayList<>();
     private static ArrayList<String> allExamSubjects = new ArrayList<>();
-    private ArrayList<Exam> examObjects = new ArrayList<>();
-    private static final File unfinishedExamsFile = new File("Exams/UnfinishedExams/EXAM-LIST.txt");
+    private static final File ExamsFile = new File("Exams/EXAM-LIST.txt");
     private static HashMap<String, String> nameToSubjectMap = new HashMap<>(); //reason why not just hashmap is because I want doubles of name/subject but not together
-
-
     private static ArrayList<Exam> examArrayList = new ArrayList<>();
     private static HashMap<Exam, Boolean> examVisibilityMap = new HashMap<>();
     private BufferedReader br;
     private JButton submit = new JButton("Submit");
+    private ArrayList<Question> allExamQuestions = new ArrayList<>();
 
     Exam() {
 
@@ -78,19 +77,26 @@ public class Exam implements Serializable {
 
     public void createExamMap() {
         try {
-            br = new BufferedReader(new FileReader(unfinishedExamsFile));
+            br = new BufferedReader(new FileReader(ExamsFile));
             String line;
             int i = 1;
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(" ");
                 String keyName = parts[0];
                 String valueSubject = parts[1];
-                nameToSubjectMap.put(keyName, valueSubject);
+                String visibleOrNot = "";
+                if (parts.length > 2) {
+                    visibleOrNot = parts[2];
+                }
 
                 Exam newExam = new Exam(keyName, valueSubject);
-                examVisibilityMap.put(newExam, false);
+                if (visibleOrNot.contains("VISIBLE")) {
+                    examVisibilityMap.put(newExam, true);
+                } else {
+                    examVisibilityMap.put(newExam, false);
+                }
 
-
+                nameToSubjectMap.put(keyName, valueSubject);
                 examArrayList.add(i - 1, newExam);
                 System.out.println(examArrayList.get(i - 1).getNameOfExam());
                 i++;
@@ -131,7 +137,7 @@ public class Exam implements Serializable {
 
     public void addExamToList(String nameOfThisExam, String subjectOfThisExam) {
         try {
-            PrintWriter writer = new PrintWriter(new FileWriter(unfinishedExamsFile, true));
+            PrintWriter writer = new PrintWriter(new FileWriter(ExamsFile, true));
             writer.println(nameOfThisExam + " " + subjectOfThisExam);
             writer.close();
         } catch (IOException e) {
@@ -141,7 +147,7 @@ public class Exam implements Serializable {
 
     public void setNumberOfExamsOnFile() {
         try {
-            br = new BufferedReader(new FileReader(unfinishedExamsFile));
+            br = new BufferedReader(new FileReader(ExamsFile));
             String line;
             while ((line = br.readLine()) != null) {
                 numberOfExams++;
@@ -199,7 +205,33 @@ public class Exam implements Serializable {
         }
     }
 
-    public boolean isExamFullyCreated() {
-        return isExamFullyCreated();
+    public boolean isExamFinished(Exam exam) {
+        return examVisibilityMap.get(exam);
+    }
+
+    public ArrayList<Exam> getAllFinishedExams() {
+        ArrayList<Exam> allFinishedExams = new ArrayList<>();
+        for (Map.Entry<Exam, Boolean> entry : examVisibilityMap.entrySet()) {
+            Exam key = entry.getKey();
+            boolean value = entry.getValue();
+
+            if (value) {
+                allFinishedExams.add(key);
+            }
+        }
+
+        return allFinishedExams;
+    }
+
+    public void setExamAsFinished(Exam exam) {
+        examVisibilityMap.put(exam, true);
+    }
+
+    public ArrayList<Question> getAllExamQuestions() {
+        return allExamQuestions;
+    }
+
+    public void setAllExamQuestions(Question q) {
+        allExamQuestions.add(q);
     }
 }
