@@ -2,6 +2,8 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.io.*;
 import java.util.ArrayList;
 
@@ -28,33 +30,27 @@ public class ExamSheet extends AdminPage implements Serializable {
     ExamSheet (Exam selectedExam) {
         this.selectedExam = selectedExam;
         try {
-            String specifiedFile = selectedExam.getNameOfExam() + ".ser";
+            String specifiedFile = selectedExam.getNameOfExam() + ".json";
             String finishedPath = "Exams/FinishedExams/" + specifiedFile;
             String unfinishedPath = "Exams/UnfinishedExams/" + specifiedFile;
 
-            FileInputStream fileIn = null;
+            String fileIn;
             File finishedFile = new File(finishedPath);
             File unfinishedFile = new File(unfinishedPath);
 
             if (finishedFile.exists()) {
-                fileIn = new FileInputStream(finishedFile);
+                fileIn = finishedPath;
             } else {
                 if (unfinishedFile.exists()) {
-                    fileIn = new FileInputStream(unfinishedFile);
+                    fileIn = unfinishedPath;
                 } else {
                     throw new FileNotFoundException("File wasnt found");
                 }
             }
+            questions = ExamSerializer.deserializeQuestionsFromJson(fileIn);
 
-            ObjectInputStream in = new ObjectInputStream(fileIn);
-            ExamSheet savedExamSheet = (ExamSheet) in.readObject();
-            setVisible.setSelected(savedExamSheet.isVisible);
-            in.close();
-            fileIn.close();
-            System.out.println("file found successfully");
-            this.questions = new ArrayList<>(savedExamSheet.questions);
-        } catch (IOException | ClassNotFoundException ex) {
-            System.out.println("file not found");
+        } catch (IOException ex) {
+            ex.printStackTrace();
         }
         allQuestionsContainer = new JPanel(new GridBagLayout());
         examScrollPane = new JScrollPane(allQuestionsContainer);
@@ -65,11 +61,9 @@ public class ExamSheet extends AdminPage implements Serializable {
         // Render the questions in the allQuestionsContainer
         renderQuestions();
 
+
     }
     public void createExamSheet() {
-
-
-
         JPanel addMenu = new JPanel();
         BoxLayout leftMenuLayout = new BoxLayout(addMenu, BoxLayout.Y_AXIS);
         addMenu.setLayout(leftMenuLayout);
@@ -100,6 +94,14 @@ public class ExamSheet extends AdminPage implements Serializable {
         addMenu.add(addLongAnswer);
         addMenu.add(Box.createVerticalStrut(10));
 
+        JButton addTrueFalse = new JButton("True or False");
+        addTrueFalse.setFont(font);
+        addTrueFalse.setAlignmentX(Component.CENTER_ALIGNMENT);
+        addTrueFalse.setMaximumSize(new Dimension(150, 50)); //sets height but for some reason doesnt work on width
+        addTrueFalse.setPreferredSize(new Dimension(150, 50)); //sets width but for some reason doesnt work on height
+        addMenu.add(addTrueFalse);
+        addMenu.add(Box.createVerticalStrut(10));
+
         JPanel centerLeftPanel = new JPanel();
         BoxLayout centerMenuLayout = new BoxLayout(centerLeftPanel, BoxLayout.X_AXIS);
         centerLeftPanel.setLayout(centerMenuLayout);
@@ -124,6 +126,11 @@ public class ExamSheet extends AdminPage implements Serializable {
             renderQuestions();
         });
 
+        addTrueFalse.addActionListener(e -> {
+            initializeQuestion(QuestionType.TRUE_FALSE);
+            renderQuestions();
+        });
+
         JPanel bottomPanel = new JPanel(new BorderLayout());
         JPanel visibility = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton saveExam = new JButton("Save exam");
@@ -141,26 +148,27 @@ public class ExamSheet extends AdminPage implements Serializable {
                 if (!filePath.exists()) {
                     filePath.createNewFile();
                 }
+
+                for (Question question: questions) {
+                    if (question.getQuestionType() != QuestionType.SHORT_ANSWER && question.getQuestionType() != QuestionType.LONG_ANSWER &&
+                        question.getRightAnswer() == -1) {
+                        JOptionPane.showMessageDialog(new JOptionPane(JOptionPane.ERROR_MESSAGE), "Question " +
+                        question.getRealQuestionNumber() + " is lacking an answer");
+                        return;
+                    }
+                }
+
                 if (setVisible.isSelected()) {
                     isVisible = true;
                     selectedExam.setExamAsFinished(selectedExam);
-
                     changeFilePath = "/FinishedExams/";
+                } else {
+                    changeFilePath = "/UnfinishedExams/";
                 }
 
-                FileOutputStream questionOut = new FileOutputStream(filePath.getPath() + changeFilePath + selectedExam.getNameOfExam() + "Questions.ser");
-                ObjectOutputStream questionOjectOut = new ObjectOutputStream(questionOut);
-                questionOjectOut.writeObject(questions);
-                questionOjectOut.close();
-                questionOut.close();
-                System.out.println("Question list saved successfully");
+                selectedExam.setAllExamQuestions(questions);
 
-                FileOutputStream fileOut = new FileOutputStream(filePath.getPath() + changeFilePath + selectedExam.getNameOfExam() + ".ser");
-                ObjectOutputStream out = new ObjectOutputStream(fileOut);
-                out.writeObject(this);
-                out.close();
-                fileOut.close();
-                System.out.println("ExamSheet saved successfully.");
+                ExamSerializer.serializeQuestionsToJson(selectedExam, (filePath + changeFilePath));
                 System.out.println("visible?: " + isVisible);
 
             } catch (IOException ex) {
@@ -183,6 +191,16 @@ public class ExamSheet extends AdminPage implements Serializable {
         examSheet.setVisible(true);
     }
 
+    /**
+     * renders the EXAM SHEET based off of the deserialized JSON ArrayList of
+     * Question class objects
+     */
+    public void renderExamSheet() {
+        for (Question question : questions) {
+
+        }
+    }
+
     public void renderQuestions() { //repaint allQuestionContainer as they are
         resetContainer(allQuestionsContainer);
         int index = 0;
@@ -200,6 +218,10 @@ public class ExamSheet extends AdminPage implements Serializable {
                     break;
                 case LONG_ANSWER:
                     createLongAnswer(allQuestionsContainer, index, question);
+                    index++;
+                    break;
+                case TRUE_FALSE:
+                    createTrueFalse(allQuestionsContainer, index, question);
                     index++;
                     break;
                 default:
@@ -306,20 +328,20 @@ public class ExamSheet extends AdminPage implements Serializable {
     private void createMultipleChoice(JPanel allQuestionsContainer, int index, Question thisQuestion) {
         JPanel questionContainer = new JPanel(new GridBagLayout());
         JPanel questionPanel = new JPanel();
-        JPanel answerPanel = new JPanel();
+        JPanel answerPanel = new JPanel(new GridBagLayout());
         JLabel question = new JLabel("Q" + (index + 1) + ": ");
         JTextArea questionInput = new JTextArea();
+
         questionInput.setLineWrap(true);
         questionInput.setWrapStyleWord(true);
         questionInput.setText(thisQuestion.getQuestion());
 
-        addDelayedListener(questionInput, 500, () -> {
+        addDelayedListener(questionInput, 250, () -> {
             String questionInputtedByUser;
             questionInputtedByUser = questionInput.getText();
             questions.get(index).setQuestion(questionInputtedByUser);
             System.out.println("Question " + (index+1) + " is " + questions.get(index).getQuestion());
         });
-
         JScrollPane questionTextPane = new JScrollPane(questionInput);
         questionTextPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         questionTextPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
@@ -340,31 +362,156 @@ public class ExamSheet extends AdminPage implements Serializable {
         questionContainer.add(questionPanel, c);
 
         char currentCharacter = 'A';
+        ButtonGroup buttonGroup = new ButtonGroup();
         for (int i=0; i<4; i++) {
             JLabel abcd = new JLabel(String.valueOf(currentCharacter) + ": ");
             JTextField answerInput = new JTextField();
+            JRadioButton rightAnswer = new JRadioButton("Right answer?");
+            JPanel inputPanel = new JPanel();
+            GridBagConstraints multipleAnswerConstraints = new GridBagConstraints();
+            multipleAnswerConstraints.gridx = GridBagConstraints.RELATIVE;
+            multipleAnswerConstraints.gridy = 1;
+
             if (thisQuestion.getAnswers() != null && thisQuestion.getAnswers().size() == 4) {
                 answerInput.setText(thisQuestion.getAnswers(i));
             }
+
             final int answerIndex = i;
+
+            if (thisQuestion.getRightAnswer() != -1 && thisQuestion.getRightAnswer() == answerIndex) {
+                rightAnswer.setSelected(true);
+            }
 
             addDelayedListener(answerInput, 250, () -> {
                 String answer;
                 answer = answerInput.getText();
-                questions.get(index).setAnswers(answerIndex, answer);
+                thisQuestion.setAnswers(answerIndex, answer);
                 System.out.println("Question " + (index+1) + "'s answers are: " + thisQuestion.getAnswers());
             });
 
+            ItemListener itemListener = e -> {
+                if (e.getStateChange() == ItemEvent.SELECTED) {
+                    JRadioButton selectedButton = (JRadioButton) e.getItem();
+                    String selectedButtonText = answerInput.getText();
+                    questions.get(index).setRightAnswer(answerIndex);
+                    System.out.println("Right answer to the question is :" + thisQuestion.getRightAnswer());
+                }
+            };
+            rightAnswer.addItemListener(itemListener);
+
             answerInput.setPreferredSize(new Dimension(multipleAnswerDimensions));
-            answerPanel.add(abcd);
-            answerPanel.add(answerInput);
+            inputPanel.add(abcd);
+            inputPanel.add(answerInput);
+            answerPanel.add(inputPanel);
+            buttonGroup.add(rightAnswer);
+            answerPanel.add(rightAnswer, multipleAnswerConstraints);
             questionContainer.add(answerPanel, c);
+
+
             currentCharacter++;
         }
 
         allQuestionsContainer.add(questionContainer, gbc);
         examSheet.revalidate();
 
+        removeQuestion.addActionListener(e1 -> {
+            allQuestionsContainer.remove(questionContainer);
+            questions.remove(index);
+            renderQuestions();
+        });
+    }
+
+    private void createTrueFalse(JPanel allQuestionsContainer, int index, Question thisQuestion) {
+        JPanel questionContainer = new JPanel(new GridBagLayout());
+        JPanel questionPanel = new JPanel();
+        JPanel answerPanel = new JPanel();
+        JLabel question = new JLabel("Q" + (index + 1) + ": ");
+        JTextArea questionInput = new JTextArea();
+        ButtonGroup buttonGroup = new ButtonGroup();
+        GridBagConstraints questionPanelConstraints = new GridBagConstraints();
+
+        questionInput.setLineWrap(true);
+        questionInput.setWrapStyleWord(true);
+        questionInput.setText(thisQuestion.getQuestion());
+
+        addDelayedListener(questionInput, 250, () -> {
+            String questionInputtedByUser;
+            questionInputtedByUser = questionInput.getText();
+            questions.get(index).setQuestion(questionInputtedByUser);
+            System.out.println("Question " + (index+1) + " is " + questions.get(index).getQuestion());
+        });
+
+        JScrollPane questionTextPane = new JScrollPane(questionInput);
+        questionTextPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        questionTextPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        Dimension multipleAnswerDimensions = new Dimension(300, 40);
+        questionTextPane.setPreferredSize(new Dimension(questionTextDimensions));
+        JButton removeQuestion = new JButton("Remove question");
+        GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 0; //set 0 columns
+        c.gridy = GridBagConstraints.RELATIVE; //set row to 0, increment as components are added
+        c.insets = new Insets(5, 5, 5, 5); //padding between components
+
+
+        for (int i=0; i < 2; i++) {
+            int answerIndex = i;
+
+            if (i==0) {
+                JRadioButton trueButton = new JRadioButton("TRUE");
+                buttonGroup.add(trueButton);
+                answerPanel.add(trueButton);
+
+                if (thisQuestion.getRightAnswer() != -1 && thisQuestion.getRightAnswer() == 0) {
+                    trueButton.setSelected(true);
+                }
+
+                ItemListener itemListener = e -> {
+                    if (e.getStateChange() == ItemEvent.SELECTED) {
+                        JRadioButton selectedButton = (JRadioButton) e.getItem();
+                        String selectedButtonText = selectedButton.getText();
+                        thisQuestion.setRightAnswer(answerIndex);
+                        System.out.println("Right answer to the question is :" + questions.get(index).getRightAnswer());
+                    }
+                };
+                trueButton.addItemListener(itemListener);
+            } else if (i==1) {
+                JRadioButton falseButton = new JRadioButton("FALSE");
+                buttonGroup.add(falseButton);
+                answerPanel.add(falseButton);
+
+                if (thisQuestion.getRightAnswer() != -1 && thisQuestion.getRightAnswer() == 0) {
+                    falseButton.setSelected(true);
+                }
+
+                ItemListener itemListener = e -> {
+                    if (e.getStateChange() == ItemEvent.SELECTED) {
+                        JRadioButton selectedButton = (JRadioButton) e.getItem();
+                        String selectedButtonText = selectedButton.getText();
+                        thisQuestion.setRightAnswer(answerIndex);
+                        System.out.println("Right answer to the question is :" + questions.get(index).getRightAnswer());
+                    }
+                };
+                falseButton.addItemListener(itemListener);
+            }
+        }
+
+        questionPanel.add(question);
+        questionPanel.add(questionTextPane);
+        questionPanel.add(removeQuestion);
+        questionContainer.add(questionPanel, c);
+        c.insets = new Insets(0, 0, 0, 110);
+        questionContainer.add(answerPanel, c);
+
+
+
+        allQuestionsContainer.add(questionContainer, gbc);
+        examSheet.revalidate();
+
+        removeQuestion(allQuestionsContainer, index, questionContainer, removeQuestion);
+    }
+
+    private void removeQuestion(JPanel allQuestionsContainer, int index, JPanel questionContainer, JButton removeQuestion) {
         removeQuestion.addActionListener(e1 -> {
             allQuestionsContainer.remove(questionContainer);
             questions.remove(index);
@@ -438,6 +585,7 @@ public class ExamSheet extends AdminPage implements Serializable {
                 break;
             case LONG_ANSWER:
             case SHORT_ANSWER:
+            case TRUE_FALSE:
             default:
                 newQuestion = new Question("", "", type);
                 break;

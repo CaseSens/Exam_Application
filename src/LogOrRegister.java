@@ -85,7 +85,7 @@ public class LogOrRegister {
                     createRegisterPage(username, password);
                 } else {
                     JOptionPane.showMessageDialog(null, "You have entered a username that is already" +
-                    " in use, please login instead.");
+                            " in use, please login instead.");
                 }
         });
     }
@@ -95,7 +95,6 @@ public class LogOrRegister {
         submit.addActionListener(e -> {
             String username = usernameText.getText();
             String password = passwordText.getText();
-
 
             if (combinedAdminSet.contains(username)) {
                 String adminPassword = userFileMap.getAdminUsers().get(username);

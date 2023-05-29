@@ -5,7 +5,15 @@ public class Question implements Serializable {
     private String question;
     private ArrayList<String> answers;
     private QuestionType questionType;
-    private Boolean isVisible = false;
+    private int rightAnswer = -1;
+    /**
+     * the questions number as it appears on the exam, not the index of any array
+     */
+    private int realQuestionNumber;
+
+    public Question() {
+
+    }
 
     public Question (String question, String answers, QuestionType questionType) {
         this.question = question;
@@ -54,10 +62,27 @@ public class Question implements Serializable {
     public void setQuestionType(QuestionType questionType) {
         this.questionType = questionType;
     }
+
+    public int getRightAnswer() {
+        return rightAnswer;
+    }
+
+    public void setRightAnswer(int answerNum) {
+        rightAnswer = answerNum;
+    }
+
+    public int getRealQuestionNumber() {
+        return realQuestionNumber;
+    }
+
+    public void setRealQuestionNumber(int index) {
+        realQuestionNumber = index;
+    }
 }
 
 enum QuestionType {
     MULTIPLE_CHOICE,
     SHORT_ANSWER,
-    LONG_ANSWER
+    LONG_ANSWER,
+    TRUE_FALSE
 }

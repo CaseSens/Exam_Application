@@ -28,7 +28,6 @@ public class Exam implements Serializable {
         this.subjectOfExam = subject;
         nameToSubjectMap.put(name, subject);
 
-
     }
 
     Exam(AdminPage adminPageInstance) //when you want to create an exam
@@ -231,7 +230,7 @@ public class Exam implements Serializable {
         return allExamQuestions;
     }
 
-    public void setAllExamQuestions(Question q) {
-        allExamQuestions.add(q);
+    public void setAllExamQuestions(ArrayList<Question> q) {
+        allExamQuestions = q;
     }
 }
