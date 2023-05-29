@@ -2,22 +2,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 
-public class Exam implements Serializable {
-    private static int numberOfExams;
+public class Exam extends ExamList implements Serializable {
     private String nameOfExam;
     private String subjectOfExam;
-    private static ArrayList<String> allExamNames = new ArrayList<>();
-    private static ArrayList<String> allExamSubjects = new ArrayList<>();
-    private static final File ExamsFile = new File("Exams/EXAM-LIST.txt");
-    private static HashMap<String, String> nameToSubjectMap = new HashMap<>(); //reason why not just hashmap is because I want doubles of name/subject but not together
-    private static ArrayList<Exam> examArrayList = new ArrayList<>();
-    private static HashMap<Exam, Boolean> examVisibilityMap = new HashMap<>();
-    private BufferedReader br;
     private JButton submit = new JButton("Submit");
     private ArrayList<Question> allExamQuestions = new ArrayList<>();
+    boolean isVisible = false;
 
     Exam() {
 
@@ -26,7 +18,7 @@ public class Exam implements Serializable {
     Exam(String name, String subject) { //when you want to access exam names
         this.nameOfExam = name;
         this.subjectOfExam = subject;
-        nameToSubjectMap.put(name, subject);
+        ExamList.nameToSubjectMap.put(name, subject);
 
     }
 
@@ -60,11 +52,11 @@ public class Exam implements Serializable {
 
 
         submit.addActionListener(e -> {
-            String nameOfThisExam = enterNameOfExam.getText();
-            String subjectOfThisExam = enterSubjectOfExam.getText();
-            doesExamExist();
-            if (!doesExamExist()) {
-                addExamToList(nameOfThisExam, subjectOfThisExam);
+            nameOfExam = enterNameOfExam.getText();
+            subjectOfExam = enterSubjectOfExam.getText();
+            doesExamExist(nameOfExam, subjectOfExam);
+            if (!doesExamExist(nameOfExam, subjectOfExam)) {
+                addExamToList(this);
                 createExamFrame.setVisible(false);
                 adminPageInstance.closeMainFrame();
                 resetPage();
@@ -74,96 +66,14 @@ public class Exam implements Serializable {
         });
     }
 
-    public void createExamMap() {
-        try {
-            br = new BufferedReader(new FileReader(ExamsFile));
-            String line;
-            int i = 1;
-            while ((line = br.readLine()) != null) {
-                String[] parts = line.split(" ");
-                String keyName = parts[0];
-                String valueSubject = parts[1];
-                String visibleOrNot = "";
-                if (parts.length > 2) {
-                    visibleOrNot = parts[2];
-                }
 
-                Exam newExam = new Exam(keyName, valueSubject);
-                if (visibleOrNot.contains("VISIBLE")) {
-                    examVisibilityMap.put(newExam, true);
-                } else {
-                    examVisibilityMap.put(newExam, false);
-                }
-
-                nameToSubjectMap.put(keyName, valueSubject);
-                examArrayList.add(i - 1, newExam);
-                System.out.println(examArrayList.get(i - 1).getNameOfExam());
-                i++;
-                nameToSubjectMap.put(keyName, valueSubject);
-                allExamNames.add(keyName);
-                allExamSubjects.add(valueSubject);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        System.out.println(nameToSubjectMap);
-
-    }
-
-    public Exam getExamAtIndex(int index) {
-        return examArrayList.get(index);
-    }
-
-    public int getIndexOfExam(Exam exam) {
-        for (int i = 0; i < examArrayList.size(); i++) {
-            if (examArrayList.get(i).equals(exam)) {
-                return i; // Found the index for the specified Exam object
-            }
-        }
-        return -1; // Exam not found in the ArrayList
-    }
-
-    public boolean doesExamExist() {
-        for (String key : nameToSubjectMap.keySet()) { //for loop to ignore case
-            if (key.equalsIgnoreCase(nameOfExam) && nameToSubjectMap.get(key).equalsIgnoreCase(subjectOfExam)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public void addExamToList(String nameOfThisExam, String subjectOfThisExam) {
-        try {
-            PrintWriter writer = new PrintWriter(new FileWriter(ExamsFile, true));
-            writer.println(nameOfThisExam + " " + subjectOfThisExam);
-            writer.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void setNumberOfExamsOnFile() {
-        try {
-            br = new BufferedReader(new FileReader(ExamsFile));
-            String line;
-            while ((line = br.readLine()) != null) {
-                numberOfExams++;
-            }
-            System.out.println("number of exams: " + getNumberOfExamsOnFile());
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
     public void resetPage() {
-        numberOfExams = 0;
-        allExamNames.clear();
-        allExamSubjects.clear();
-        nameToSubjectMap.clear();
-        examArrayList.clear();
+        ExamList.numberOfExams = 0;
+        ExamList.allExamNames.clear();
+        ExamList.allExamSubjects.clear();
+        ExamList.nameToSubjectMap.clear();
+        ExamList.examArrayList.clear();
 
         setNumberOfExamsOnFile();
         createExamMap();
@@ -171,59 +81,17 @@ public class Exam implements Serializable {
         adminPage.createAdminPage();
     }
 
-    public int getNumberOfExamsOnFile() {
-        return numberOfExams;
-    }
 
-    public String getSubjectOfExam() {
-        return subjectOfExam;
-    }
 
     public String getNameOfExam() {
         return nameOfExam;
     }
-
-    public String getNameOfExamAtIndex(int index) {
-        return allExamNames.get(index);
+    public String getSubjectOfExam() {
+        return subjectOfExam;
     }
 
-    public String getSubjectOfExamAtIndex(int index) {
-        return allExamSubjects.get(index);
-    }
-
-    public ArrayList<Exam> getAllExamsByNumberMap() {
-        return examArrayList;
-    }
-
-    /**
-     * simply prints out all exams
-     */
-    public void examListPerLine() {
-        for (int i = 0; i < examArrayList.size(); i++) {
-            System.out.println("Exam " + (i + 1) + ": " + getNameOfExam());
-        }
-    }
-
-    public boolean isExamFinished(Exam exam) {
-        return examVisibilityMap.get(exam);
-    }
-
-    public ArrayList<Exam> getAllFinishedExams() {
-        ArrayList<Exam> allFinishedExams = new ArrayList<>();
-        for (Map.Entry<Exam, Boolean> entry : examVisibilityMap.entrySet()) {
-            Exam key = entry.getKey();
-            boolean value = entry.getValue();
-
-            if (value) {
-                allFinishedExams.add(key);
-            }
-        }
-
-        return allFinishedExams;
-    }
-
-    public void setExamAsFinished(Exam exam) {
-        examVisibilityMap.put(exam, true);
+    public boolean isExamFinished() {
+        return isVisible;
     }
 
     public ArrayList<Question> getAllExamQuestions() {
@@ -233,4 +101,13 @@ public class Exam implements Serializable {
     public void setAllExamQuestions(ArrayList<Question> q) {
         allExamQuestions = q;
     }
+
+    public void setIsVisible(boolean isVisible) {
+        this.isVisible = isVisible;
+    }
+
+    public boolean getVisibility() {
+        return isVisible;
+    }
+
 }

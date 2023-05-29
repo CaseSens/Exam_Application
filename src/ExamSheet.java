@@ -5,6 +5,9 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 
 
@@ -30,7 +33,7 @@ public class ExamSheet extends AdminPage implements Serializable {
     ExamSheet (Exam selectedExam) {
         this.selectedExam = selectedExam;
         try {
-            String specifiedFile = selectedExam.getNameOfExam() + ".json";
+            String specifiedFile = selectedExam.getNameOfExam() + "/" + selectedExam.getNameOfExam() + ".json";
             String finishedPath = "Exams/FinishedExams/" + specifiedFile;
             String unfinishedPath = "Exams/UnfinishedExams/" + specifiedFile;
 
@@ -159,17 +162,43 @@ public class ExamSheet extends AdminPage implements Serializable {
                 }
 
                 if (setVisible.isSelected()) {
-                    isVisible = true;
+                    Path path = Paths.get(filePath.getPath() + "/UnfinishedExams/" + selectedExam.getNameOfExam() + "/");
+                    if (Files.exists(path)) {
+                        try {
+                            deleteFolder(path);
+                            System.out.println("Folder deleted: " + path);
+                        } catch (IOException e1) {
+                            System.err.println("Failed to delete folder " + path);
+                            e1.printStackTrace();
+                        }
+                    }
+
+                    changeFilePath = "/FinishedExams/" + selectedExam.getNameOfExam() + "/";
                     selectedExam.setExamAsFinished(selectedExam);
-                    changeFilePath = "/FinishedExams/";
+                    selectedExam.setIsVisible(true);
+                    try {
+                        ExamList.addVisibleToDatabase(selectedExam);
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
                 } else {
-                    changeFilePath = "/UnfinishedExams/";
+                    Path path = Paths.get(filePath.getPath() + "/FinishedExams/" + selectedExam.getNameOfExam() + "/");
+                    if (Files.exists(path)) {
+                        try {
+                            deleteFolder(path);
+                            System.out.println("Folder deleted: " + path);
+                        } catch (IOException e1) {
+                            System.err.println("Failed to delete folder " + path);
+                            e1.printStackTrace();
+                        }
+                    }
+                    changeFilePath = "/UnfinishedExams/" + selectedExam.getNameOfExam() + "/";
                 }
 
                 selectedExam.setAllExamQuestions(questions);
 
                 ExamSerializer.serializeQuestionsToJson(selectedExam, (filePath + changeFilePath));
-                System.out.println("visible?: " + isVisible);
+                System.out.println("visible?: " + setVisible.isSelected());
 
             } catch (IOException ex) {
                 ex.printStackTrace();
@@ -191,16 +220,6 @@ public class ExamSheet extends AdminPage implements Serializable {
         examSheet.setVisible(true);
     }
 
-    /**
-     * renders the EXAM SHEET based off of the deserialized JSON ArrayList of
-     * Question class objects
-     */
-    public void renderExamSheet() {
-        for (Question question : questions) {
-
-        }
-    }
-
     public void renderQuestions() { //repaint allQuestionContainer as they are
         resetContainer(allQuestionsContainer);
         int index = 0;
@@ -210,18 +229,22 @@ public class ExamSheet extends AdminPage implements Serializable {
             switch (question.getQuestionType()) {
                 case MULTIPLE_CHOICE:
                     createMultipleChoice(allQuestionsContainer, index, question);
+                    question.setRealQuestionNumber(index + 1);
                     index++;
                     break;
                 case SHORT_ANSWER:
                     createShortAnswer(allQuestionsContainer, index, question);
+                    question.setRealQuestionNumber(index + 1);
                     index++;
                     break;
                 case LONG_ANSWER:
                     createLongAnswer(allQuestionsContainer, index, question);
+                    question.setRealQuestionNumber(index + 1);
                     index++;
                     break;
                 case TRUE_FALSE:
                     createTrueFalse(allQuestionsContainer, index, question);
+                    question.setRealQuestionNumber(index + 1);
                     index++;
                     break;
                 default:
@@ -240,7 +263,7 @@ public class ExamSheet extends AdminPage implements Serializable {
         questionInput.setWrapStyleWord(true);
         questionInput.setText(thisQuestion.getQuestion());
 
-        addDelayedListener(questionInput, 250, () -> {
+        DelayedListener.addDelayedListener(questionInput, 250, () -> {
                     String questionInputtedByUser;
                     questionInputtedByUser = questionInput.getText();
                     questions.get(index).setQuestion(questionInputtedByUser);
@@ -290,7 +313,7 @@ public class ExamSheet extends AdminPage implements Serializable {
         questionInput.setWrapStyleWord(true);
         questionInput.setText(thisQuestion.getQuestion());
 
-        addDelayedListener(questionInput, 250, () -> {
+        DelayedListener.addDelayedListener(questionInput, 250, () -> {
             String questionInputtedByUser;
             questionInputtedByUser = questionInput.getText();
             questions.get(index).setQuestion(questionInputtedByUser);
@@ -336,7 +359,7 @@ public class ExamSheet extends AdminPage implements Serializable {
         questionInput.setWrapStyleWord(true);
         questionInput.setText(thisQuestion.getQuestion());
 
-        addDelayedListener(questionInput, 250, () -> {
+        DelayedListener.addDelayedListener(questionInput, 250, () -> {
             String questionInputtedByUser;
             questionInputtedByUser = questionInput.getText();
             questions.get(index).setQuestion(questionInputtedByUser);
@@ -382,7 +405,7 @@ public class ExamSheet extends AdminPage implements Serializable {
                 rightAnswer.setSelected(true);
             }
 
-            addDelayedListener(answerInput, 250, () -> {
+            DelayedListener.addDelayedListener(answerInput, 250, () -> {
                 String answer;
                 answer = answerInput.getText();
                 thisQuestion.setAnswers(answerIndex, answer);
@@ -428,13 +451,12 @@ public class ExamSheet extends AdminPage implements Serializable {
         JLabel question = new JLabel("Q" + (index + 1) + ": ");
         JTextArea questionInput = new JTextArea();
         ButtonGroup buttonGroup = new ButtonGroup();
-        GridBagConstraints questionPanelConstraints = new GridBagConstraints();
 
         questionInput.setLineWrap(true);
         questionInput.setWrapStyleWord(true);
         questionInput.setText(thisQuestion.getQuestion());
 
-        addDelayedListener(questionInput, 250, () -> {
+        DelayedListener.addDelayedListener(questionInput, 250, () -> {
             String questionInputtedByUser;
             questionInputtedByUser = questionInput.getText();
             questions.get(index).setQuestion(questionInputtedByUser);
@@ -444,7 +466,6 @@ public class ExamSheet extends AdminPage implements Serializable {
         JScrollPane questionTextPane = new JScrollPane(questionInput);
         questionTextPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         questionTextPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        Dimension multipleAnswerDimensions = new Dimension(300, 40);
         questionTextPane.setPreferredSize(new Dimension(questionTextDimensions));
         JButton removeQuestion = new JButton("Remove question");
         GridBagConstraints c = new GridBagConstraints();
@@ -519,63 +540,9 @@ public class ExamSheet extends AdminPage implements Serializable {
         });
     }
 
-    public void addDelayedListener(JTextField answer, int delay, Runnable action) {
-        Timer timer = new Timer(delay, e -> {
-            action.run();
-        });
-        timer.setRepeats(false);
 
-           answer.getDocument().addDocumentListener(new DocumentListener() {
 
-               private void scheduleTimer() {
-                   timer.stop();
-                   timer.start();
-               }
-               @Override
-               public void insertUpdate(DocumentEvent e) {
-                   scheduleTimer();
-               }
 
-               @Override
-               public void removeUpdate(DocumentEvent e) {
-                   scheduleTimer();
-               }
-
-               @Override
-               public void changedUpdate(DocumentEvent e) {
-                   scheduleTimer();
-               }
-           });
-    }
-
-    public void addDelayedListener(JTextArea question, int delay, Runnable action) {
-        Timer timer = new Timer(delay, e -> {
-            action.run();
-        });
-        timer.setRepeats(false);
-
-        question.getDocument().addDocumentListener(new DocumentListener() {
-
-            private void scheduleTimer() {
-                timer.stop();
-                timer.start();
-            }
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                scheduleTimer();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                scheduleTimer();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                scheduleTimer();
-            }
-        });
-    }
 
     public void initializeQuestion(QuestionType type) {
         Question newQuestion;

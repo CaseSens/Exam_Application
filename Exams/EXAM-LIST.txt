@@ -1,8 +1,4 @@
 EXAM1 SCIENCE VISIBLE
-Exam2 Math
+Exam2 Science
 Exam3 History
-Exam4 History
-Exam5 Maths
-Exam6 test
-Exam7 pass1
-Exam8 test
+Exam4 Maths

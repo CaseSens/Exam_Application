@@ -1,9 +1,11 @@
+import java.io.IOException;
+
 public class Main {
     public static void main(String[] args)
     {
-        Exam examInfo = new Exam();
-        examInfo.setNumberOfExamsOnFile();
-        examInfo.createExamMap();
+
+        ExamList.setNumberOfExamsOnFile();
+        ExamList.createExamMap();
 
         UserFileMap userFileMap = new UserFileMap();
         System.out.println(userFileMap.getStudentUsers().toString());
